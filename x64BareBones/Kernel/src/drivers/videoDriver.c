@@ -40,8 +40,9 @@ struct vbe_mode_info_structure {
 } __attribute__ ((packed));
 
 typedef struct vbe_mode_info_structure * VBEInfoPtr;
-
 VBEInfoPtr VBE_mode_info = (VBEInfoPtr) 0x0000000000005C00;
+
+static int font_scale = 1; 
 
 uint16_t getScreenWidth() {
     return VBE_mode_info->width;
@@ -62,23 +63,30 @@ void putPixel(uint32_t hexColor, uint64_t x, uint64_t y) {
 void putChar(char c, uint32_t x, uint32_t y, uint32_t color) {
     uint8_t *glyph = getFontChar(c);
     if (glyph == NULL)
-        return;  // Carácter no válido
+        return;  
 
-    uint8_t width = getFontWidth();
-    uint8_t height = getFontHeight();
+    uint8_t base_width = 8;   // tamaño original
+    uint8_t base_height = 16;
+    int scale = getFontWidth() / base_width;
 
-    for (uint8_t row = 0; row < height; row++) {
+    for (uint8_t row = 0; row < base_height; row++) {
         uint8_t rowBits = glyph[row];
-        for (uint8_t col = 0; col < width; col++) {
+        for (uint8_t col = 0; col < base_width; col++) {
             if ((rowBits >> (7 - col)) & 1) {
-                putPixel(color, x + col, y + row);
+                // dibujar un bloque de pixel equivalente con escala
+                for (int dx = 0; dx < scale; dx++) {
+                    for (int dy = 0; dy < scale; dy++) {
+                        putPixel(color, x + col * scale + dx, y + row * scale + dy);
+                    }
+                }
             }
         }
     }
 }
 
+
 void drawRect(uint32_t hexColor, uint64_t x, uint64_t y, uint64_t width, uint64_t height) {
-    uint8_t * framebuffer = (uint8_t *) VBE_mode_info->framebuffer;
+	uint8_t * framebuffer = (uint8_t *) VBE_mode_info->framebuffer;
     uint64_t bytesPerPixel = VBE_mode_info->bpp / 8;
     uint64_t pitch = VBE_mode_info->pitch;
 
@@ -93,6 +101,12 @@ void drawRect(uint32_t hexColor, uint64_t x, uint64_t y, uint64_t width, uint64_
 }
 
 void clearScreen() {
-    drawRect(0, 0, getScreenWidth(), getScreenHeight(), 0x000000);
+    uint8_t *framebuffer = (uint8_t *) VBE_mode_info->framebuffer;
+    uint64_t screenSize = getScreenWidth() * getScreenHeight();
+    for (uint64_t i = 0; i < screenSize; i++) {
+        framebuffer[i] = 0; // negro 
+    }
 }
+
+
 

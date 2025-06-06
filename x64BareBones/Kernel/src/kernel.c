@@ -3,6 +3,7 @@
 #include <lib.h>
 #include <moduleLoader.h>
 #include <naiveConsole.h>
+#include "interrupts.h"
 
 extern uint8_t text;
 extern uint8_t rodata;
@@ -83,12 +84,10 @@ void * initializeKernelBinary()
 }
 
 int main() {
-    load_idt();                              // cargar IDT
+    load_idt();
+    _sti();                                  
 
-    _sti();                                  // ahora sí: habilitar interrupciones
-
-    putPixel(0x00FF0000, 20, 20);            // test visual
-    while(1);                                // no salir
+    //putPixel(0x00FF0000, 20, 20); 
 
 	ncPrint("[Kernel Main]");
 	ncNewline();
@@ -108,5 +107,6 @@ int main() {
 	ncNewline();
 
 	ncPrint("[Finished]");
+	while(1); 
 	return 0;
 }

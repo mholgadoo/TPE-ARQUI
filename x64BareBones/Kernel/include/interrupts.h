@@ -17,7 +17,7 @@ void _irq03Handler(void);
 void _irq04Handler(void);
 void _irq05Handler(void);
 
-extern void _int80Handler();
+void _int80Handler();
 
 void _exception0Handler(void);
 
@@ -30,6 +30,9 @@ void _hlt(void);
 void picMasterMask(uint8_t mask);
 
 void picSlaveMask(uint8_t mask);
+
+void load_idt();
+void _sti();
 
 //Termina la ejecución de la cpu.
 void haltcpu(void);

@@ -1,6 +1,6 @@
 #include <keyboardDriver.h>
-#include <lib.h>  // para NULL, si lo necesitás
-#include <videoDriver.h>  // para pruebas, luego podés sacarlo
+#include <lib.h>
+#include "font.h"
 
 #define KEYS_AMOUNT 58
 #define BUFFER_SIZE 256
@@ -8,16 +8,6 @@
 static char keyBuffer[BUFFER_SIZE];
 static int head = 0;
 static int tail = 0;
-
-//modo video escribir
-#define CHAR_COLOR 0xFFFFFF
-#define CHAR_START_X 10
-#define CHAR_START_Y 10
-#define CHAR_SPACING 8
-
-static uint32_t cursor_x = CHAR_START_X;
-static uint32_t cursor_y = CHAR_START_Y;
-//
 
 static const char scanCodeTable[KEYS_AMOUNT][2] = {
     {0, 0}, {27, 27}, {'1', '!'}, {'2', '@'}, {'3', '#'}, {'4', '$'}, {'5', '%'}, {'6', '^'},
@@ -86,7 +76,7 @@ void keyboard_handler() {
     char base = scanCodeTable[scancode][0];
     char shifted = scanCodeTable[scancode][1];
 
-    // Lógica de mayúsculas para letras
+    // logica de mayuscula para letras
     if (base >= 'a' && base <= 'z') {
         int upper = capsLock ^ shift;
         ascii = upper ? shifted : base;
@@ -95,14 +85,14 @@ void keyboard_handler() {
     }
 
     if (ascii != 0) {
-        //ctrl, aca solo tengo caso de l para limpiar
         if (ctrlPressed && (ascii == 'l' || ascii == 'L')) {
             clearScreen();
-            cursor_x = CHAR_START_X;
-            cursor_y = CHAR_START_Y;
             return;
         }
-
+        pushKey(ascii);
+    }
+}
+/*
         switch (ascii) {
             case '\n':
                 cursor_y += getFontHeight();
@@ -122,5 +112,4 @@ void keyboard_handler() {
                 cursor_x += CHAR_SPACING;
                 break;
         }
-    }
-}
+        */
