@@ -30,15 +30,15 @@ void syscall_write(const char *str, int len) {
             cursor_y += getFontHeight();
             cursor_x = CHAR_START_X;
         } else if (c == '\t') {
-            cursor_x += 4 * getCharSpacing();
+            cursor_x += 4 * getFontWidth();
         } else if (c == '\b') {
-            if (cursor_x >= CHAR_START_X + getCharSpacing()) {
-                cursor_x -= getCharSpacing();
+            if (cursor_x >= CHAR_START_X) {
+                cursor_x -= getFontWidth();
                 putChar(' ', cursor_x, cursor_y, 0x000000);
             }
         } else {
             putChar(c, cursor_x, cursor_y, CHAR_COLOR);
-            cursor_x += getCharSpacing();
+            cursor_x += getFontWidth();
         }
     }
 }
@@ -104,10 +104,10 @@ void get_time(rtc_time_t *buffer) {
 //---
 
 void play_sound(uint32_t frequency, uint32_t duration_ms) {
-    playSound(frequency);
+    playBeep(frequency);
     uint64_t ticks = duration_ms / (1000 / 1193180);
     sleep(ticks);
-    stopSound();
+    stopBeep();
 }
 
 void change_font_size(int new_size) {

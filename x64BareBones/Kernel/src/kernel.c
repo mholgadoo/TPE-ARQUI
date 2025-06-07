@@ -87,8 +87,21 @@ int main() {
     load_idt();
     _sti();                                  
 
-    //putPixel(0x00FF0000, 20, 20); 
+	/*
+	char c;
+	int i = 0;
+	while (1) {
+    c = keyboard_getchar();
+    if (c != 0) {
+        putPixel(0x00FF0000, 20+i, 20);
+		i++;
+    }
+	}
+	*/
 
+    //putPixel(0x00FF0000, 20, 20); 
+    ncPrint("[Debug] Direccion de _irq01Handler: ");
+	ncPrintHex((uint64_t)&_irq01Handler);
 	ncPrint("[Kernel Main]");
 	ncNewline();
 	ncPrint("  Sample code module at 0x");

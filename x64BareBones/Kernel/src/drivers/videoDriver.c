@@ -103,10 +103,11 @@ void drawRect(uint32_t hexColor, uint64_t x, uint64_t y, uint64_t width, uint64_
 void clearScreen() {
     uint8_t *framebuffer = (uint8_t *) VBE_mode_info->framebuffer;
     uint64_t screenSize = getScreenWidth() * getScreenHeight();
-    for (uint64_t i = 0; i < screenSize; i++) {
-        framebuffer[i] = 0; // negro 
+    uint64_t totalBytes = screenSize * 4;  // 4 bytes por pixel
+
+    for (uint64_t i = 0; i < totalBytes; i++) {
+        framebuffer[i] = 0; // negro absoluto, BGRA = 0x00 0x00 0x00 0x00
     }
 }
-
 
 

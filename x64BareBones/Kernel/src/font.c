@@ -1827,10 +1827,6 @@ uint8_t getFontHeight() {
     return font_height;
 }
 
-uint8_t getCharSpacing() {
-    return char_spacing;
-}
-
 uint8_t * getFontChar(char c) {
     if (c < min_char || c > max_char) {
         return NULL;

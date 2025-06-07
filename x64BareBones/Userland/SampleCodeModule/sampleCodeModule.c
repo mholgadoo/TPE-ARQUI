@@ -1,6 +1,30 @@
 #include "syscalls.h"
 #include <stdint.h>
+#include "syscalls.h"    // Debe tener los prototipos de _sys_write y _sys_read
+#include "shell.h"       // Debe tener el prototipo de start_shell
 
+
+#define SYS_READ 1
+#define USERNAME_MAX_LEN 32
+
+int main() {
+    // Llamar a tu shell
+    char username[USERNAME_MAX_LEN] = "manu";
+     setUsername(username);
+     shell_run();
+    return 0;
+}
+
+/*
+int main() {
+    char c;
+    while (1) {
+        if (_sys_read(SYS_READ, 0, &c, 1) > 0) {
+            _sys_write(0, &c, 1);
+        }
+    }
+    return 0;
+}
 
 //mains de prueba
 // Espera unos ticks entre cada cambio, para que veas bien el efecto
@@ -26,12 +50,11 @@ int main() {
 }
 
 
-/*
 int main() {
     // Beep de 1 kHz por 500 ms
-    _sys_playSound(8, 1000, 500);
+    _sys_playBeep(8, 1000, 500);
     _sys_sleep(3, 20); // Espera un rato para no solapar sonidos
-    _sys_playSound(8, 500, 1000); // 500 Hz por 1 segundo
+    _sys_playBeep(8, 500, 1000); // 500 Hz por 1 segundo
     return 0;
 }
 

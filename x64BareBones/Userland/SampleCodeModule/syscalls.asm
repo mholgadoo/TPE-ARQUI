@@ -6,7 +6,7 @@ global _sys_drawRect
 global _sys_get_ticks
 global _sys_get_registers
 global _sys_get_time
-global _sys_playSound
+global _sys_playBeep
 global _sys_changeFontSize
 
 section .text
@@ -50,7 +50,7 @@ _sys_get_time:
     int 0x80
     ret
 
-_sys_playSound:
+_sys_playBeep:
     mov rax, 8
     int 0x80
     ret

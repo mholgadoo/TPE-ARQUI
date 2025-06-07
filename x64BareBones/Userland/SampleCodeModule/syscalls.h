@@ -12,7 +12,6 @@ typedef struct {
     uint8_t year;
 } rtc_time_t;
 
-
 //agrego los numeros para que se cargue en los registros igual que lo recibe syscall dispatcher
 void _sys_write(uint64_t syscall_number, const char *str, int len);
 void _sys_clearScreen(uint64_t syscall_number);
@@ -22,7 +21,7 @@ void _sys_drawRect(uint64_t syscall_number, uint32_t color, uint64_t x, uint64_t
 uint64_t _sys_get_ticks(uint64_t syscall_number);
 uint64_t _sys_get_registers(uint64_t syscall_number, uint64_t * regs);
 void _sys_get_time(uint64_t syscall_number,rtc_time_t *time);
-void _sys_playSound(uint64_t syscall_number, uint32_t frequency, uint32_t duration_ms);
+void _sys_playBeep(uint64_t syscall_number, uint32_t frequency, uint32_t duration_ms);
 void _sys_changeFontSize(uint64_t syscall_number, int new_size);
 
 #endif
