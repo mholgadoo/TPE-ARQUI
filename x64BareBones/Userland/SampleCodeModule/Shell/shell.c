@@ -10,15 +10,9 @@
 #define SYS_GET_TIME          7
 #define SYS_CHANGE_FONT_SIZE  9
 
-static char *username;
 
-void setUsername(const char *name) {
-    if (name == NULL || name[0] == '\0') {
-        username = "User";
-    } else {
-        username = (char *)name;
-    }
-}
+static char *username;
+static int fontScale = 1;
 
 static int str_eq(const char *a, const char *b) {
     int i = 0;
@@ -65,6 +59,7 @@ void shell_print_help() {
 }
 
 static int read_line(char *buf, int max) {
+    _sys_write(SYS_WRITE, "entro", 5); //TESTEO. ENTRA PERO NO ANDA SYS_READ.
     int i = 0;
     while (i < max - 1) {
         char c = 0;
@@ -92,12 +87,18 @@ static int read_line(char *buf, int max) {
 }
 
 static void trigger_divzero() {
-//falta
+    //testeo rapido CAMBIAR
+    volatile int x = 1;
+    volatile int y = 0;
+    volatile int z = x / y;
+    (void)z;
 }
 
 static void trigger_invopcode() {
-    //falta
+    //testeo rapido CAMBIAR
+    __asm__ __volatile__("ud2");
 }
+
 
 static void print_time() {
     rtc_time_t tm;
@@ -131,36 +132,47 @@ static void print_regs() {
         _sys_write(SYS_WRITE, "\n", 1);
     }
 }
+static void setUsername(const char *name) {
+    if (name == NULL || name[0] == '\0') {
+        username = "User";
+    } else {
+        username = (char *)name;
+    }
+}
 
-void shell_run() {
+static void commandProc(const char *line) {
+    if (str_eq(line, "help"))
+        shell_print_help();
+    else if (str_eq(line, "divzero"))
+        trigger_divzero();
+    else if (str_eq(line, "invopcode"))
+        trigger_invopcode();
+    else if (str_eq(line, "time"))
+        print_time();
+    else if (str_eq(line, "regs"))
+      print_regs();
+    else if (str_eq(line, "clear"))
+        _sys_clearScreen(SYS_CLEAR_SCREEN);
+    else if (str_eq(line, "fontscale 1"))
+       _sys_changeFontSize(SYS_CHANGE_FONT_SIZE, 1);
+    else if (str_eq(line, "fontscale 2"))
+            _sys_changeFontSize(SYS_CHANGE_FONT_SIZE, 2);
+    else if (str_eq(line, "fontscale 3"))
+        _sys_changeFontSize(SYS_CHANGE_FONT_SIZE, 3);
+    else
+       _sys_write(SYS_WRITE, "Unknown command\n",str_len("Unknown command\n"));
+}
+void shell_run(const char *name) {
+    setUsername(name);
     char line[64];
     while (1) {
-        _sys_write(0, "@", 1);
+        _sys_write(SYS_WRITE, "@", 1);
         _sys_write(SYS_WRITE, username, str_len(username));
         _sys_write(SYS_WRITE, "$> ", 3);
 
         read_line(line, sizeof(line));
         if (line[0] == '\0') continue;
 
-        if (str_eq(line, "help"))
-            shell_print_help();
-        else if (str_eq(line, "divzero"))
-            trigger_divzero();
-        else if (str_eq(line, "invopcode"))
-            trigger_invopcode();
-        else if (str_eq(line, "time"))
-            print_time();
-        else if (str_eq(line, "regs"))
-            print_regs();
-        else if (str_eq(line, "clear"))
-            _sys_clearScreen(SYS_CLEAR_SCREEN);
-        else if (str_eq(line, "fontscale1"))
-            _sys_changeFontSize(SYS_CHANGE_FONT_SIZE, 1);
-        else if (str_eq(line, "fontscale2"))
-            _sys_changeFontSize(SYS_CHANGE_FONT_SIZE, 2);
-        else if (str_eq(line, "fontscale3"))
-        _sys_changeFontSize(SYS_CHANGE_FONT_SIZE, 3);
-        else
-        _sys_write(SYS_WRITE, "Unknown command\n",str_len("Unknown command\n"));
+        commandProc(line);
     }
 }

@@ -16,10 +16,12 @@ GLOBAL _irq05Handler
 GLOBAL _int80Handler
 
 GLOBAL _exception0Handler
+GLOBAL _exception6Handler
 
 EXTERN irqDispatcher
 EXTERN exceptionDispatcher
 EXTERN syscallDispatcher
+EXTERN getStackBase
 
 SECTION .text
 
@@ -118,14 +120,20 @@ SECTION .text
 
 
 %macro exceptionHandler 1
-	pushState
+    pushState                    ; Guarda todos los registros
+    mov rdi, %1                  ; Pasá el número de excepción a exceptionDispatcher
+    call exceptionDispatcher     ; Llama a tu manejador en C
+    popState                     ; Recuperá los registros
 
-	mov rdi, %1 ; pasaje de parametro
-	call exceptionDispatcher
+    call getStackBase            ; rax = stack base limpio para userland
 
-	popState
-	iretq
+    mov [rsp+24], rax            ; Setea el nuevo stack pointer para cuando vuelva
+    mov rax, 0x400000            ; userland = entrypoint de shell (ej: 0x400000)
+    mov [rsp], rax               ; Setea el nuevo instruction pointer (rip)
+    iretq                        ; Salta de vuelta al userland
+
 %endmacro
+
 
 
 _hlt:
@@ -191,12 +199,14 @@ _int80Handler:
 _exception0Handler:
 	exceptionHandler 0
 
+;invalid opcode
+_exception6Handler:
+	exceptionHandler 6
+
 haltcpu:
 	cli
 	hlt
 	ret
-
-
 
 SECTION .bss
 	aux resq 1

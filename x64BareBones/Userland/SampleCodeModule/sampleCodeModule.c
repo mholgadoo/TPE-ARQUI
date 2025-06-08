@@ -9,9 +9,7 @@
 
 int main() {
     // Llamar a tu shell
-    char username[USERNAME_MAX_LEN] = "manu";
-     setUsername(username);
-     shell_run();
+     shell_run(0);
     return 0;
 }
 

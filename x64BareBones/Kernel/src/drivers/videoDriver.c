@@ -1,6 +1,16 @@
 #include <videoDriver.h>
 #include <font.h>
 
+#define CHAR_COLOR 0xFFFFFF
+#define CHAR_START_X 10
+#define CHAR_START_Y 10
+#define CHAR_SPACING 8
+
+#define STDIN 0
+
+static uint32_t cursor_x = CHAR_START_X;
+static uint32_t cursor_y = CHAR_START_Y;
+
 struct vbe_mode_info_structure {
 	uint16_t attributes;		// deprecated, only bit 7 should be of interest to you, and it indicates the mode supports a linear frame buffer.
 	uint8_t window_a;			// deprecated
@@ -84,6 +94,44 @@ void putChar(char c, uint32_t x, uint32_t y, uint32_t color) {
     }
 }
 
+void writeString(const char *str, int len){
+
+    if (!str || len <= 0)
+    return;
+
+    for (int i = 0; i < len; i++) {
+        char c = str[i];
+        if (c == '\0')
+        break;
+
+        if (c == '\n') {
+            cursor_y += getFontHeight();
+            cursor_x = CHAR_START_X;
+        }else if (c == '\t') {
+            cursor_x += 4 * getFontWidth();
+        }else if (c == '\b') {
+            if (cursor_x >= CHAR_START_X) {
+                cursor_x -= getFontWidth();
+                putChar(' ', cursor_x, cursor_y, 0x000000);
+            }
+        }else{
+            putChar(c, cursor_x, cursor_y, CHAR_COLOR);
+            cursor_x += getFontWidth();
+        }
+    }
+}
+
+void print_hex64(uint64_t value) {
+    char hex[18];        // "0x" + 16 dígitos + '\0'
+    hex[0] = '0';
+    hex[1] = 'x';
+    for (int i = 0; i < 16; i++) {
+        int nibble = (value >> ((15 - i) * 4)) & 0xF;
+        hex[2 + i] = (nibble < 10) ? ('0' + nibble) : ('A' + (nibble - 10));
+    }
+    // No '\0' necesario, imprime los 18 caracteres
+    writeString(hex, 18);
+}
 
 void drawRect(uint32_t hexColor, uint64_t x, uint64_t y, uint64_t width, uint64_t height) {
 	uint8_t * framebuffer = (uint8_t *) VBE_mode_info->framebuffer;
@@ -108,6 +156,8 @@ void clearScreen() {
     for (uint64_t i = 0; i < totalBytes; i++) {
         framebuffer[i] = 0; // negro absoluto, BGRA = 0x00 0x00 0x00 0x00
     }
+    cursor_x = CHAR_START_X;
+    cursor_y = CHAR_START_Y;
 }
 
 

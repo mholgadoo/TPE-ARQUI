@@ -20,27 +20,7 @@ extern uint8_t inb(uint16_t port);
 extern void outb(uint16_t port, uint8_t value);
 
 void syscall_write(const char *str, int len) {
-    if (!str || len <= 0)
-        return;
-    for (int i = 0; i < len; i++) {
-        char c = str[i];
-        if (c == '\0')
-            break;
-        if (c == '\n') {
-            cursor_y += getFontHeight();
-            cursor_x = CHAR_START_X;
-        } else if (c == '\t') {
-            cursor_x += 4 * getFontWidth();
-        } else if (c == '\b') {
-            if (cursor_x >= CHAR_START_X) {
-                cursor_x -= getFontWidth();
-                putChar(' ', cursor_x, cursor_y, 0x000000);
-            }
-        } else {
-            putChar(c, cursor_x, cursor_y, CHAR_COLOR);
-            cursor_x += getFontWidth();
-        }
-    }
+    writeString(str, len);
 }
 
 uint64_t sys_read(int fd, char * buffer, int count) {
@@ -60,8 +40,6 @@ uint64_t sys_read(int fd, char * buffer, int count) {
 
 void syscall_clear_screen() {
     clearScreen();
-    cursor_x = CHAR_START_X;
-    cursor_y = CHAR_START_Y;
 }
 
 uint64_t get_registers(uint64_t * buffer){
