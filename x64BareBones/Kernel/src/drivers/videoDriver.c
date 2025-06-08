@@ -10,6 +10,12 @@
 
 static uint32_t cursor_x = CHAR_START_X;
 static uint32_t cursor_y = CHAR_START_Y;
+#define CURSOR_COLOR     0xFFFFFF
+#define BACKGROUND_COLOR 0x000000
+static int      cursor_visible = 1;
+static uint32_t prev_cx = CHAR_START_X, prev_cy = CHAR_START_Y;
+static void     drawCursorAt(uint32_t x, uint32_t y);
+
 
 struct vbe_mode_info_structure {
 	uint16_t attributes;		// deprecated, only bit 7 should be of interest to you, and it indicates the mode supports a linear frame buffer.
@@ -72,21 +78,29 @@ void putPixel(uint32_t hexColor, uint64_t x, uint64_t y) {
 
 void putChar(char c, uint32_t x, uint32_t y, uint32_t color) {
     uint8_t *glyph = getFontChar(c);
-    if (glyph == NULL)
-        return;  
+    if (!glyph) return;
 
-    uint8_t base_width = 8;   // tamaño original
+    uint8_t base_width  = 8;
     uint8_t base_height = 16;
     int scale = getFontWidth() / base_width;
 
+    // limpiar fondo de la celda
+    
+    (BACKGROUND_COLOR,
+             x, y,
+             base_width * scale,
+             base_height * scale);
+
+    // dibujar bits del glyph
     for (uint8_t row = 0; row < base_height; row++) {
         uint8_t rowBits = glyph[row];
         for (uint8_t col = 0; col < base_width; col++) {
             if ((rowBits >> (7 - col)) & 1) {
-                // dibujar un bloque de pixel equivalente con escala
                 for (int dx = 0; dx < scale; dx++) {
                     for (int dy = 0; dy < scale; dy++) {
-                        putPixel(color, x + col * scale + dx, y + row * scale + dy);
+                        putPixel(color,
+                                 x + col * scale + dx,
+                                 y + row * scale + dy);
                     }
                 }
             }
@@ -94,33 +108,48 @@ void putChar(char c, uint32_t x, uint32_t y, uint32_t color) {
     }
 }
 
-void writeString(const char *str, int len){
-
-    if (!str || len <= 0)
-    return;
+void writeString(const char *str, int len) {
+    if (!str || len <= 0) return;
 
     for (int i = 0; i < len; i++) {
         char c = str[i];
-        if (c == '\0')
-        break;
+        if (!c) break;
 
         if (c == '\n') {
             cursor_y += getFontHeight();
             cursor_x = CHAR_START_X;
-        }else if (c == '\t') {
+        } else if (c == '\t') {
             cursor_x += 4 * getFontWidth();
-        }else if (c == '\b') {
+        } else if (c == '\b') {
             if (cursor_x >= CHAR_START_X) {
                 cursor_x -= getFontWidth();
-                putChar(' ', cursor_x, cursor_y, 0x000000);
+                drawRect(BACKGROUND_COLOR,
+                         cursor_x, cursor_y,
+                         getFontWidth(),
+                         getFontHeight());
             }
-        }else{
+        } else {
             putChar(c, cursor_x, cursor_y, CHAR_COLOR);
             cursor_x += getFontWidth();
         }
     }
-}
 
+    // borrar solo la línea del cursor anterior
+    drawRect(BACKGROUND_COLOR,
+             prev_cx,
+             prev_cy + getFontHeight() - 2,
+             getFontWidth(),
+             2);
+    // dibujar nueva línea de cursor
+    drawRect(CURSOR_COLOR,
+             cursor_x,
+             cursor_y + getFontHeight() - 2,
+             getFontWidth(),
+             2);
+
+    prev_cx = cursor_x;
+    prev_cy = cursor_y;
+}
 void print_hex64(uint64_t value) {
     char hex[18];        // "0x" + 16 dígitos + '\0'
     hex[0] = '0';
@@ -160,4 +189,13 @@ void clearScreen() {
     cursor_y = CHAR_START_Y;
 }
 
-
+//funcion para ver el cursor
+static void drawCursorAt(uint32_t x, uint32_t y) {
+    // dibuja un bloque de una línea (underscore) al pie del glyph
+    uint32_t w = getFontWidth();
+    uint32_t h = 2;  // grosor de la línea
+    drawRect(cursor_visible ? CURSOR_COLOR : BACKGROUND_COLOR,
+             x, y + getFontHeight() - h,
+             w, h);
+    cursor_visible ^= 1;
+}

@@ -14,5 +14,6 @@ void clearScreen();
 
 uint16_t getScreenWidth();
 uint16_t getScreenHeight();
+static void drawCursorAt(uint32_t x, uint32_t y);
 
 #endif // VIDEO_DRIVER_H

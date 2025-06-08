@@ -115,23 +115,37 @@ static void print_time() {
     _sys_write(SYS_WRITE, "\n", 1);
 }
 
+static void print_hex64(uint64_t value) {
+    char buf[16];
+    for (int i = 15; i >= 0; i--) {
+        int d = value & 0xF;
+        buf[i] = d < 10 ? '0' + d : 'A' + (d - 10);
+        value >>= 4;
+    }
+    _sys_write(SYS_WRITE, buf, 16);
+}
+
 static void print_regs() {
+    static const char *names[17] = {
+        "RAX","RBX","RCX","RDX",
+        "RSI","RDI","RBP","RSP",
+        "R8","R9","R10","R11",
+        "R12","R13","R14","R15",
+        "RIP"
+    };
+
     uint64_t regs[17];
     _sys_get_registers(SYS_GET_REGS, regs);
 
     for (int i = 0; i < 17; i++) {
-        char hex[16];
-        uint64_t val = regs[i];
-        for (int j = 15; j >= 0; j--) {
-            int d = val & 0xF;
-            hex[j] = d < 10 ? '0' + d : 'A' + (d - 10);
-            val >>= 4;
-        }
-        _sys_write(SYS_WRITE, "0x", 2);
-        _sys_write(SYS_WRITE, hex, 16);
+        _sys_write(SYS_WRITE, names[i], str_len(names[i]));
+        _sys_write(SYS_WRITE, ": 0x", 4);
+        print_hex64(regs[i]);
         _sys_write(SYS_WRITE, "\n", 1);
     }
 }
+
+
 static void setUsername(const char *name) {
     if (name == NULL || name[0] == '\0') {
         username = "User";
