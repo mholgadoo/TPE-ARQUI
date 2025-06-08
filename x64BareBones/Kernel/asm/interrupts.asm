@@ -120,18 +120,21 @@ SECTION .text
 
 
 %macro exceptionHandler 1
-    pushState                    ; Guarda todos los registros
-    mov rdi, %1                  ; Pasá el número de excepción a exceptionDispatcher
-    call exceptionDispatcher     ; Llama a tu manejador en C
-    popState                     ; Recuperá los registros
+    pushState
+    mov rdi, %1
+    call exceptionDispatcher
+    popState
 
-    call getStackBase            ; rax = stack base limpio para userland
+    call getStackBase
+    mov rsp, rax
 
-    mov [rsp+24], rax            ; Setea el nuevo stack pointer para cuando vuelva
-    mov rax, 0x400000            ; userland = entrypoint de shell (ej: 0x400000)
-    mov [rsp], rax               ; Setea el nuevo instruction pointer (rip)
-    iretq                        ; Salta de vuelta al userland
-
+    pushfq
+    pop rax
+    or rax, 0x200         ; habilitar IF
+    push rax              ; rflags
+    push qword 0x08       ; cs
+    push qword 0x400000   ; user entrypoint
+    iretq
 %endmacro
 
 
