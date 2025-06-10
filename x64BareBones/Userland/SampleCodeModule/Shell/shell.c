@@ -20,6 +20,7 @@ void shell_print_help() {
     print("fontscale 1      - lowest font size\n");
     print("fontscale 2      - middle font size\n");
     print("fontscale 3      - bigger font size\n");
+    print("pongis     - play pongis game\n");
 }
 
 static int read_line(char *buf, int max) {

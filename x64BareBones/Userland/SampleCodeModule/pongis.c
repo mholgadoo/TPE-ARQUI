@@ -70,7 +70,7 @@ static void draw_score(int p1, int p2) {
     print("\n");
 }
 
-//para ver cuantos jugadores juegan. Si juega uno solo, el otro se mueve solo (como un obstaculo que se mueve)
+//para ver cuantos jugadores juegan. Si juega uno solo, el otro se mueve solo (siguiendo a la pelota en el eje y)
 static int ask_players() {
     const char *msg = "Jugadores (1/2): ";
     print(msg);
@@ -172,7 +172,7 @@ void pongis_game() {
             if (!running) break;
 
             if (players == 1) {
-                // el segundo jugador se mueve solo (sube y baja)
+                // el segundo jugador se mueve solo (sube y baja segun la pos de la pelota)
                 if (p2.y + PLAYERS_SIZE/2 < ball.y)
                     p2.y += PLAYER_SPEED;
                 else if (p2.y + PLAYERS_SIZE/2 > ball.y + BALL_SIZE)
