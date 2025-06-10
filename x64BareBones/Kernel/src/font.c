@@ -1,12 +1,8 @@
 #include <font.h>
 
-static const uint8_t font_width_init = 8;
-static const uint8_t font_height_init = 16;
-static const uint8_t char_spacing_init = 8;
+static const uint8_t font_width = 8;
+static const uint8_t font_height = 16;
 
-static uint8_t char_spacing = char_spacing_init;
-static uint8_t font_width = font_width_init;
-static uint8_t font_height = font_height_init;
 static const uint8_t min_char = ' ';
 static const uint8_t max_char = '~'; 
 
@@ -1831,11 +1827,5 @@ uint8_t * getFontChar(char c) {
     if (c < min_char || c > max_char) {
         return NULL;
     }
-    return fontBitmap + (c - min_char) * font_height_init;
-}
-
-void setScale(int new_size) {
-    font_width = font_width_init * new_size;
-    font_height = font_height_init * new_size;
-    char_spacing = char_spacing_init * new_size;
+    return fontBitmap + (c - min_char) * font_height;
 }

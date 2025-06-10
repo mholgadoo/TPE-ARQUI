@@ -4,12 +4,12 @@
 #define CHAR_COLOR 0xFFFFFF
 #define CHAR_START_X 10
 #define CHAR_START_Y 10
-#define CHAR_SPACING 8
 
 #define STDIN 0
 
 static uint32_t cursor_x = CHAR_START_X;
 static uint32_t cursor_y = CHAR_START_Y;
+
 #define CURSOR_COLOR     0xFFFFFF
 #define BACKGROUND_COLOR 0x000000
 static int      cursor_visible = 1;
@@ -60,6 +60,13 @@ VBEInfoPtr VBE_mode_info = (VBEInfoPtr) 0x0000000000005C00;
 
 static int font_scale = 1; 
 
+static uint32_t getFontWidthScaled() {
+    return font_scale * getFontWidth();
+}
+static uint32_t getFontHeightScaled() {
+    return font_scale * getFontHeight();
+} 
+
 uint16_t getScreenWidth() {
     return VBE_mode_info->width;
 }
@@ -82,7 +89,7 @@ void putChar(char c, uint32_t x, uint32_t y, uint32_t color) {
 
     uint8_t base_width  = 8;
     uint8_t base_height = 16;
-    int scale = getFontWidth() / base_width;
+    int scale = getFontWidthScaled() / base_width;
 
     // limpiar fondo de la celda
     
@@ -116,35 +123,35 @@ void writeString(const char *str, int len) {
         if (!c) break;
 
         if (c == '\n') {
-            cursor_y += getFontHeight();
+            cursor_y += getFontHeightScaled();
             cursor_x = CHAR_START_X;
         } else if (c == '\t') {
-            cursor_x += 4 * getFontWidth();
+            cursor_x += 4 * getFontWidthScaled();
         } else if (c == '\b') {
             if (cursor_x >= CHAR_START_X) {
-                cursor_x -= getFontWidth();
+                cursor_x -= getFontWidthScaled();
                 drawRect(BACKGROUND_COLOR,
                          cursor_x, cursor_y,
-                         getFontWidth(),
-                         getFontHeight());
+                         getFontWidthScaled(),
+                         getFontHeightScaled());
             }
         } else {
             putChar(c, cursor_x, cursor_y, CHAR_COLOR);
-            cursor_x += getFontWidth();
+            cursor_x += getFontWidthScaled();
         }
     }
 
     // borrar solo la línea del cursor anterior
     drawRect(BACKGROUND_COLOR,
              prev_cx,
-             prev_cy + getFontHeight() - 2,
-             getFontWidth(),
+             prev_cy + getFontHeightScaled() - 2,
+             getFontWidthScaled(),
              2);
     // dibujar nueva línea de cursor
     drawRect(CURSOR_COLOR,
              cursor_x,
-             cursor_y + getFontHeight() - 2,
-             getFontWidth(),
+             cursor_y + getFontHeightScaled() - 2,
+             getFontWidthScaled(),
              2);
 
     prev_cx = cursor_x;
@@ -192,10 +199,16 @@ void clearScreen() {
 //funcion para ver el cursor
 static void drawCursorAt(uint32_t x, uint32_t y) {
     // dibuja un bloque de una línea (underscore) al pie del glyph
-    uint32_t w = getFontWidth();
+    uint32_t w = getFontWidthScaled();
     uint32_t h = 2;  // grosor de la línea
     drawRect(cursor_visible ? CURSOR_COLOR : BACKGROUND_COLOR,
-             x, y + getFontHeight() - h,
+             x, y + getFontHeightScaled() - h,
              w, h);
     cursor_visible ^= 1;
+}
+
+void setScale(int new_size){
+    if(new_size > 0){
+        font_scale = new_size;
+    }
 }

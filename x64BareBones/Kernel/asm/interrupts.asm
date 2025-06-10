@@ -131,9 +131,9 @@ SECTION .text
     pushfq
     pop rax
     or rax, 0x200         ; habilitar IF
-    push rax              ; rflags
+    push rax              ; flags
     push qword 0x08       ; cs
-    push qword 0x400000   ; user entrypoint
+    push qword 0x400000
     iretq
 %endmacro
 

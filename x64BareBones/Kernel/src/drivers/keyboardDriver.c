@@ -92,24 +92,3 @@ void keyboard_handler() {
         pushKey(ascii);
     }
 }
-/*
-        switch (ascii) {
-            case '\n':
-                cursor_y += getFontHeight();
-                cursor_x = CHAR_START_X;
-                break;
-            case '\t':
-                cursor_x += 4 * CHAR_SPACING;
-                break;
-            case '\b':
-                if (cursor_x >= CHAR_START_X + CHAR_SPACING) {
-                    cursor_x -= CHAR_SPACING;
-                    putChar(' ', cursor_x, cursor_y, 0x000000);  // borrar con negro
-                }
-                break;
-            default:
-                putChar(ascii, cursor_x, cursor_y, CHAR_COLOR);
-                cursor_x += CHAR_SPACING;
-                break;
-        }
-        */

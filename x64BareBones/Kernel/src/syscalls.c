@@ -8,7 +8,6 @@
 #define CHAR_COLOR 0xFFFFFF
 #define CHAR_START_X 10
 #define CHAR_START_Y 10
-#define CHAR_SPACING 8
 
 #define STDIN 0
 
@@ -83,8 +82,14 @@ void get_time(rtc_time_t *buffer) {
 
 void play_sound(uint32_t frequency, uint32_t duration_ms) {
     playBeep(frequency);
-    uint64_t ticks = 40;
+    uint64_t ticks;
+
+    if (duration_ms < 25)
+        ticks = 1;
+    else
+        ticks = duration_ms / 25;
     sleep(ticks);
+
     stopBeep();
 }
 

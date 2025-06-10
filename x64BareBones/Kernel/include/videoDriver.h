@@ -16,4 +16,6 @@ uint16_t getScreenWidth();
 uint16_t getScreenHeight();
 static void drawCursorAt(uint32_t x, uint32_t y);
 
+void setScale(int new_size);
+
 #endif // VIDEO_DRIVER_H
