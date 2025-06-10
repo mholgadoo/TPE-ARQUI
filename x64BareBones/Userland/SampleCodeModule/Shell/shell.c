@@ -59,10 +59,11 @@ static void trigger_invopcode() {
 static void print_time() {
     rtc_time_t tm;
     getTime(&tm);
+    int hour = (tm.hour - 3 + 24) % 24;//restamos 3 por la zona horaria UTC-3
     char buf[9];
     buf[2] = ':'; buf[5] = ':'; buf[8] = '\0';
-    buf[0] = '0' + (tm.hour / 10);
-    buf[1] = '0' + (tm.hour % 10);
+    buf[0] = '0' + (hour / 10);
+    buf[1] = '0' + (hour % 10); 
     buf[3] = '0' + (tm.min  / 10);
     buf[4] = '0' + (tm.min  % 10);
     buf[6] = '0' + (tm.sec  / 10);
