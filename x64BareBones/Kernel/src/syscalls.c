@@ -83,7 +83,7 @@ void get_time(rtc_time_t *buffer) {
 
 void play_sound(uint32_t frequency, uint32_t duration_ms) {
     playBeep(frequency);
-    uint64_t ticks = duration_ms / (1000 / 1193180);
+    uint64_t ticks = 40;
     sleep(ticks);
     stopBeep();
 }

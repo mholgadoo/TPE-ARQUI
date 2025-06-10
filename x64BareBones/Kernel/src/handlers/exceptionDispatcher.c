@@ -3,6 +3,7 @@
 #include <lib.h>
 #include <syscalls.h>
 #include <time.h>
+#include <interrupts.h>
 
 #define ZERO_EXCEPTION_ID 0
 #define INVALID_OPCODE_ID 6
@@ -42,13 +43,13 @@ void printException(const char *msg, int len) {
         writeString(": ", 2);
         print_hex64(regs[i]);
         writeString("\n", 1);
+		writeString("\n", 1);
     }
 
-	sleep(30); // Espera 3 segundos para que el usuario vea el mensaje
-	clearScreen();
-	//writeString("Press any key to continue...\n", 29);
+	_sti();
+	writeString("Press any key to continue...\n", 29);
 	
-	//char c;
-	//while (keyboard_getchar(&c) == 0); // Espera a que el usuario presione una tecla
-	//clearScreen();
+	char c;
+	while (keyboard_getchar(&c) == 0); // Espera a que el usuario presione una tecla
+	clearScreen();
 }

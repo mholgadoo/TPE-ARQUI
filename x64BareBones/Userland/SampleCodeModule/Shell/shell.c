@@ -59,7 +59,6 @@ void shell_print_help() {
 }
 
 static int read_line(char *buf, int max) {
-    _sys_write(SYS_WRITE, "entro", 5); //TESTEO. ENTRA PERO NO ANDA SYS_READ.
     int i = 0;
     while (i < max - 1) {
         char c = 0;
@@ -87,11 +86,7 @@ static int read_line(char *buf, int max) {
 }
 
 static void trigger_divzero() {
-    //testeo rapido CAMBIAR
-    volatile int x = 1;
-    volatile int y = 0;
-    volatile int z = x / y;
-    (void)z;
+    int x = 1/0;
 }
 
 static void trigger_invopcode() {
@@ -173,6 +168,10 @@ static void commandProc(const char *line) {
             _sys_changeFontSize(SYS_CHANGE_FONT_SIZE, 2);
     else if (str_eq(line, "fontscale 3"))
         _sys_changeFontSize(SYS_CHANGE_FONT_SIZE, 3);
+    else if (str_eq(line, "playbeep")) {
+        _sys_write(SYS_WRITE, "Playing beep sound...\n", str_len("Playing beep sound...\n"));
+        _sys_playBeep(8, 1000, 440);  // Play a beep at 440 Hz
+    }
     else
        _sys_write(SYS_WRITE, "Unknown command\n",str_len("Unknown command\n"));
 }

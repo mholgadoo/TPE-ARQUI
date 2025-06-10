@@ -15,9 +15,7 @@ uint64_t playBeep(uint32_t f) {
 
     // play sound
     uint8_t aux = inb(0x61);
-    if (aux != (aux | 3)) {
-        outb(0x61, aux | 3);
-    }
+    outb(0x61, aux | 3);
     return 1;
 }
 
