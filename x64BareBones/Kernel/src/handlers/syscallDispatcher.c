@@ -24,7 +24,8 @@ uint64_t syscallDispatcher(uint64_t syscall_number, uint64_t arg1, uint64_t arg2
         case 5:
             return get_ticks();
         case 6:
-            return get_saved_registers((uint64_t*)arg1);
+            get_saved_registers((uint64_t*)arg1);
+            return 0;
         case 7:
             get_time((rtc_time_t*)arg1);
             return 0;

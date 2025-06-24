@@ -24,6 +24,7 @@ EXTERN syscallDispatcher
 EXTERN getStackBase
 
 SECTION .text
+%define DELTA 120
 
 %macro pushState 0
 	push rax
@@ -96,63 +97,54 @@ SECTION .text
 %endmacro
 
 %macro saveSnapshot 0
-    ;especiales
-    mov rax, [rsp]           ; RIP
-    mov [snapshot+8*16], rax
-    mov rax, [rsp+8]         ; CS
-    mov [snapshot+8*17], rax
-    mov rax, [rsp+16]        ; RFLAGS
-    mov [snapshot+8*18], rax
+    ; 1) RAX…RDX
+    mov   rax, [rsp+112]        ; RAX
+    mov   [snapshot+  0], rax
+    mov   rax, [rsp+104]        ; RBX
+    mov   [snapshot+  8], rax
+    mov   rax, [rsp+ 96]        ; RCX
+    mov   [snapshot+ 16], rax
+    mov   rax, [rsp+ 88]        ; RDX
+    mov   [snapshot+ 24], rax
 
-    ; ¿hay user RSP/SS?
-    mov rbx, [rsp+8]
-    and rbx, 0x3
-    cmp rbx, 3
-    jne .no_user
-    mov rax, [rsp+24]        ; user RSP
-    mov [snapshot+8*19], rax
-    mov rax, [rsp+32]        ; user SS
-    mov [snapshot+8*20], rax
-.no_user:
+    ; 2) RSI, RDI, RBP
+    mov   rax, [rsp+ 64]        ; RSI
+    mov   [snapshot+ 32], rax
+    mov   rax, [rsp+ 72]        ; RDI
+    mov   [snapshot+ 40], rax
+    mov   rax, [rsp+ 80]        ; RBP
+    mov   [snapshot+ 48], rax
 
-    ;generales
-    mov [snapshot+8*0],  rax   ; RAX (usa rax actual)∫
-    mov rax, rbx
-    mov [snapshot+8*1],  rax   ; RBX
-    mov rax, rcx
-    mov [snapshot+8*2],  rax
-    mov rax, rdx
-    mov [snapshot+8*3],  rax
-    mov rax, rsi
-    mov [snapshot+8*4],  rax
-    mov rax, rdi
-    mov [snapshot+8*5],  rax
-    mov rax, rbp
-    mov [snapshot+8*6],  rax
-    mov rax, r8
-    mov [snapshot+8*7],  rax
-    mov rax, r9
-    mov [snapshot+8*8],  rax
-    mov rax, r10
-    mov [snapshot+8*9],  rax
-    mov rax, r11
-    mov [snapshot+8*10], rax
-    mov rax, r12
-    mov [snapshot+8*11], rax
-    mov rax, r13
-    mov [snapshot+8*12], rax
-    mov rax, r14
-    mov [snapshot+8*13], rax
-    mov rax, r15
-    mov [snapshot+8*14], rax
-    mov rax, rsp
-    mov [snapshot+8*15], rax
+    ; 3) R8…R15
+    mov   rax, [rsp+ 56]        ; R8
+    mov   [snapshot+ 56], rax
+    mov   rax, [rsp+ 48]        ; R9
+    mov   [snapshot+ 64], rax
+    mov   rax, [rsp+ 40]        ; R10
+    mov   [snapshot+ 72], rax
+    mov   rax, [rsp+ 32]        ; R11
+    mov   [snapshot+ 80], rax
+    mov   rax, [rsp+ 24]        ; R12
+    mov   [snapshot+ 88], rax
+    mov   rax, [rsp+ 16]        ; R13
+    mov   [snapshot+ 96], rax
+    mov   rax, [rsp+  8]        ; R14
+    mov   [snapshot+104], rax
+    mov   rax, [rsp    ]        ; R15
+    mov   [snapshot+112], rax
+
+    ; 4) old RSP que puso la CPU (slot 15)
+    mov   rax, [rsp+DELTA+24]
+    mov   [snapshot+120], rax
+
+    ; 5) RIP (slot 16)
+    mov   rax, [rsp+DELTA]
+    mov   [snapshot+128], rax
 %endmacro
 
-
 %macro irqHandlerMaster 1
-	saveSnapshot
 	pushState
+	saveSnapshot
 
 	mov rdi, %1 ; pasaje de parametro
 	call irqDispatcher
@@ -176,9 +168,8 @@ SECTION .text
 
 
 %macro exceptionHandler 1
-	saveSnapshot
-
     pushState
+	saveSnapshot
     mov rdi, %1
     call exceptionDispatcher
     popState

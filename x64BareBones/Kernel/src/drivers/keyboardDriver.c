@@ -63,11 +63,6 @@ void keyboard_handler() {
         ctrlPressed = 0;
     }
 
-    if (ctrlPressed && (scancode=='r' || scancode=='R')) {
-        uint64_t *snapshot = get_registers();
-        save_snapshot(snapshot);
-    }
-
     if(scancode == 0x2A || scancode == 0x36) {
         shift = 1;
     }
@@ -93,6 +88,11 @@ void keyboard_handler() {
     }
 
     if (ascii != 0) {
+        if (ctrlPressed && (ascii =='r' || ascii =='R')) {
+            uint64_t *snapshot = get_registers();
+            save_snapshot(snapshot);
+            return;
+        }
         if (ctrlPressed && (ascii == 'l' || ascii == 'L')) {
             clearScreen();
             return;

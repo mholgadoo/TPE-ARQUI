@@ -93,12 +93,7 @@ static void print_hex64(uint64_t v) {
 static void print_regs(void)
 {
     uint64_t regs[REG_COUNT];
-
-    if (!get_saved_regs(regs)) {
-        print("No snapshot captured yet (press Ctrl+R first).\n");
-        return;
-    }
-
+    getRegisters(&regs);
     for (int i = 0; i < REG_COUNT; i++) {
         print(regName[i]);
         print(": 0x");

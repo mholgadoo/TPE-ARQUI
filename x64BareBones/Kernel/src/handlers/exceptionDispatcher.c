@@ -4,7 +4,7 @@
 #include <syscalls.h>
 #include <time.h>
 #include <interrupts.h>
-#include <interrupts.h>
+#include <videoDriver.h>
 
 #define ZERO_EXCEPTION_ID 0
 #define INVALID_OPCODE_ID 6
@@ -38,8 +38,6 @@ static void invalid_opcode() {
 }
 
 void printException(const char *msg, int len) {
-    uint64_t *raw = get_registers();   /* snapshot recién capturado */
-    save_snapshot(raw);                /* lo congelo para comando regs */
 
     writeString("Exception: ", 11);
     writeString(msg, len);
@@ -52,7 +50,7 @@ void printException(const char *msg, int len) {
     };
 
     for (int i = 0; i < 21; i++) {
-        print(name[i]); print(": 0x"); print_hex64(raw[i]); print("\n");
+        writeString(name[i], 3); writeString(": 0x", 4); print_hex64(snapshot[i]); writeString("\n", 1);
     }
 
 	_sti();
