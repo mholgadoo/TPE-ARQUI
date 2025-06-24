@@ -2,6 +2,7 @@
 #include <videoDriver.h>
 #include <keyboardDriver.h>
 #include <time.h>
+#include <registers.h>
 
 //llamado desde interrupts.asm, que es llamado desde wrapper de syscall en userland
 uint64_t syscallDispatcher(uint64_t syscall_number, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
@@ -23,7 +24,7 @@ uint64_t syscallDispatcher(uint64_t syscall_number, uint64_t arg1, uint64_t arg2
         case 5:
             return get_ticks();
         case 6:
-            return get_registers((uint64_t *)arg1);
+            return get_saved_registers((uint64_t*)arg1);
         case 7:
             get_time((rtc_time_t*)arg1);
             return 0;

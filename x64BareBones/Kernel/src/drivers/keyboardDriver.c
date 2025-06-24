@@ -1,6 +1,8 @@
 #include <keyboardDriver.h>
 #include <lib.h>
 #include "font.h"
+#include <stdint.h>
+#include "registers.h"
 
 #define KEYS_AMOUNT 58
 #define BUFFER_SIZE 256
@@ -60,6 +62,12 @@ void keyboard_handler() {
     }else if (scancode == 0x9D){
         ctrlPressed = 0;
     }
+
+    if (ctrlPressed && (scancode=='r' || scancode=='R')) {
+        uint64_t *snapshot = get_registers();
+        save_snapshot(snapshot);
+    }
+
     if(scancode == 0x2A || scancode == 0x36) {
         shift = 1;
     }

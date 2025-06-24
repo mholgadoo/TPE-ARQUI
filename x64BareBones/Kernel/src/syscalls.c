@@ -41,13 +41,6 @@ void syscall_clear_screen() {
     clearScreen();
 }
 
-uint64_t get_registers(uint64_t * buffer){
-    save_registers(buffer);
-    return 0;
-}
-
-//---
-
 static uint8_t read_rtc_register(uint8_t reg) {
     outb(0x70, reg);
     return inb(0x71);
@@ -77,8 +70,6 @@ void get_time(rtc_time_t *buffer) {
         buffer->year  = (buffer->year  & 0x0F) + ((buffer->year  / 16) * 10);
     }
 }
-
-//---
 
 void play_sound(uint32_t frequency, uint32_t duration_ms) {
     playBeep(frequency);

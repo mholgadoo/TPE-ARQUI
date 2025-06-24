@@ -4,6 +4,7 @@
 #include <syscalls.h>
 #include <time.h>
 #include <interrupts.h>
+#include <interrupts.h>
 
 #define ZERO_EXCEPTION_ID 0
 #define INVALID_OPCODE_ID 6
@@ -11,7 +12,13 @@
 static void zero_division();
 static void invalid_opcode();
 
-static const char *reg_names[] = {"RAX","RBX","RCX","RDX","RBP","RDI","RSI","R8","R9","R10","R11","R12","R13","R14","R15","RIP","CS","RFLAGS"};
+extern uint64_t snapshot[];
+
+static const char *regName[21] = {
+ "RAX","RBX","RCX","RDX","RSI","RDI","RBP",
+ "R8","R9","R10","R11","R12","R13","R14","R15",
+ "RSP","RIP","CS","RFLAGS","URSP","USS"
+};
 
 void exceptionDispatcher(int exception) {
 	if (exception == ZERO_EXCEPTION_ID)
@@ -31,19 +38,21 @@ static void invalid_opcode() {
 }
 
 void printException(const char *msg, int len) {
+    uint64_t *raw = get_registers();   /* snapshot recién capturado */
+    save_snapshot(raw);                /* lo congelo para comando regs */
+
     writeString("Exception: ", 11);
     writeString(msg, len);
     writeString("\n\nRegisters:\n", 12);
 
-	uint64_t * regs;
-	save_registers(regs);
+    static const char *name[21] = {
+      "RAX","RBX","RCX","RDX","RSI","RDI","RBP",
+      "R8","R9","R10","R11","R12","R13","R14","R15",
+      "RSP","RIP","CS","RFLAGS","URSP","USS"
+    };
 
-    for (int i = 0; i < 18; i++) {
-        writeString(reg_names[i], 3);
-        writeString(": ", 2);
-        print_hex64(regs[i]);
-        writeString("\n", 1);
-		writeString("\n", 1);
+    for (int i = 0; i < 21; i++) {
+        print(name[i]); print(": 0x"); print_hex64(raw[i]); print("\n");
     }
 
 	_sti();

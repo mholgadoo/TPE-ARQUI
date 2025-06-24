@@ -5,6 +5,8 @@
 #include "../syscalls.h"
 #include "../lib.h"
 
+#define REG_COUNT 21
+
 static char *username;
 static int fontScale = 1;
 
@@ -73,29 +75,32 @@ static void print_time() {
     print("\n");
 }
 
-static void print_hex64(uint64_t value) {
-    char buf[17];
-    buf[16] = '\0';
-    for (int i = 15; i >= 0; i--) {
-        int d = value & 0xF;
-        buf[i] = d < 10 ? '0' + d : 'A' + (d - 10);
-        value >>= 4;
+static const char *regName[REG_COUNT] = {
+  "RAX","RBX","RCX","RDX","RSI","RDI","RBP",
+  "R8","R9","R10","R11","R12","R13","R14","R15",
+  "RSP","RIP","CS","RFLAGS","URSP","USS"
+};
+
+static void print_hex64(uint64_t v) {
+    char buf[17]; buf[16]=0;
+    for (int i=15;i>=0;i--) { int d=v&0xF;
+        buf[i]= d<10?'0'+d:'A'+(d-10);
+        v>>=4;
     }
     print(buf);
 }
 
-static void print_regs() {
-    static const char *names[17] = {
-        "RAX","RBX","RCX","RDX",
-        "RSI","RDI","RBP","RSP",
-        "R8","R9","R10","R11",
-        "R12","R13","R14","R15",
-        "RIP"
-    };
-    uint64_t regs[17];
-    getRegisters(regs);
-    for (int i = 0; i < 17; i++) {
-        print(names[i]);
+static void print_regs(void)
+{
+    uint64_t regs[REG_COUNT];
+
+    if (!get_saved_regs(regs)) {
+        print("No snapshot captured yet (press Ctrl+R first).\n");
+        return;
+    }
+
+    for (int i = 0; i < REG_COUNT; i++) {
+        print(regName[i]);
         print(": 0x");
         print_hex64(regs[i]);
         print("\n");
