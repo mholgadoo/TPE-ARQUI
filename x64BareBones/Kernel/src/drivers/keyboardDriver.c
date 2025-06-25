@@ -3,6 +3,11 @@
 #include "font.h"
 #include <stdint.h>
 #include "registers.h"
+#include <videoDriver.h>
+#include <interrupts.h>
+
+extern uint8_t inb(uint16_t port);  // asm i/o
+extern void outb(uint16_t port, uint8_t value);
 
 #define KEYS_AMOUNT 58
 #define BUFFER_SIZE 256
@@ -10,6 +15,37 @@
 static char keyBuffer[BUFFER_SIZE];
 static int head = 0;
 static int tail = 0;
+
+static const char *regName[REG_COUNT] = {
+    "RAX","RBX","RCX","RDX","RSI","RDI","RBP",
+    "R8","R9","R10","R11","R12","R13","R14","R15",
+    "RSP","RIP","CS","RFLAGS","URSP","USS"
+};
+
+static void show_registers(void) {
+    uint64_t regs[REG_COUNT];
+    get_saved_registers(regs);
+    writeString("Registers snapshot:\n", 20);
+    for (int i = 0; i < REG_COUNT; i++) {
+        writeString(regName[i], 3);
+        writeString(": 0x", 4);
+        print_hex64(regs[i]);
+        writeString("\n", 1);
+    }
+
+    /*
+     * We are still inside the keyboard interrupt handler when this
+     * function is called.  Send the End Of Interrupt (EOI) to the PIC
+     * manually so new keyboard interrupts are delivered while we wait
+     * for the user to press a key to continue.
+     */
+    outb(0x20, 0x20);
+
+    _sti();
+    writeString("Press any key to continue...\n", 29);
+    while (keyboard_getchar() == 0);
+    clearScreen();
+}
 
 static const char scanCodeTable[KEYS_AMOUNT][2] = {
     {0, 0}, {27, 27}, {'1', '!'}, {'2', '@'}, {'3', '#'}, {'4', '$'}, {'5', '%'}, {'6', '^'},
@@ -47,7 +83,6 @@ char keyboard_getchar() {
     return c;
 }
 
-extern uint8_t inb(uint16_t port);  // funcion asm
 
 static int shift = 0;   // flags del teclado
 static int capsLock = 0;
@@ -91,6 +126,7 @@ void keyboard_handler() {
         if (ctrlPressed && (ascii =='r' || ascii =='R')) {
             uint64_t *snapshot = get_registers();
             save_snapshot(snapshot);
+            show_registers();
             return;
         }
         if (ctrlPressed && (ascii == 'l' || ascii == 'L')) {

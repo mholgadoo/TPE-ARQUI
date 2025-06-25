@@ -56,7 +56,6 @@ void printException(const char *msg, int len) {
 	_sti();
 	writeString("Press any key to continue...\n", 29);
 	
-	char c;
-	while (keyboard_getchar(&c) == 0); // Espera a que el usuario presione una tecla
-	clearScreen();
+        while (keyboard_getchar() == 0); // Espera a que el usuario presione una tecla
+        clearScreen();
 }
