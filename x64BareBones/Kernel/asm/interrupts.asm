@@ -133,13 +133,34 @@ SECTION .text
     mov   rax, [rsp    ]        ; R15
     mov   [snapshot+112], rax
 
-    ; 4) old RSP que puso la CPU (slot 15)
-    mov   rax, [rsp+DELTA+24]
-    mov   [snapshot+120], rax
-
-    ; 5) RIP (slot 16)
-    mov   rax, [rsp+DELTA]
+    ; -- special registers --
+    mov   rbx, [rsp+DELTA+8]    ; CS
+    mov   [snapshot+136], rbx
+    mov   rax, [rsp+DELTA+16]   ; RFLAGS
+    mov   [snapshot+144], rax
+    mov   rax, [rsp+DELTA]      ; RIP
     mov   [snapshot+128], rax
+
+    ; Determine if coming from user mode
+    mov   rax, rbx
+    and   rax, 3
+    cmp   rax, 3
+    jne   .no_user
+
+    mov   rax, [rsp+DELTA+24]   ; user RSP
+    mov   [snapshot+120], rax   ; RSP
+    mov   [snapshot+152], rax   ; URSP
+    mov   rax, [rsp+DELTA+32]   ; user SS
+    mov   [snapshot+160], rax   ; USS
+    jmp   .done
+
+.no_user:
+    lea   rax, [rsp+DELTA+24]   ; RSP before pushState
+    mov   [snapshot+120], rax
+    mov   qword [snapshot+152], 0
+    mov   qword [snapshot+160], 0
+
+.done:
 %endmacro
 
 %macro irqHandlerMaster 1
