@@ -38,24 +38,40 @@ static void invalid_opcode() {
 }
 
 void printException(const char *msg, int len) {
-
-    writeString("Exception: ", 11);
+    clearScreen();
+    writeString("========================================\n\n", 43);
+    
+    writeString("ExceptionType: ", 6);
     writeString(msg, len);
-    writeString("\n\nRegisters:\n", 12);
+    writeString("\n\n", 2);
 
     static const char *name[21] = {
-      "RAX","RBX","RCX","RDX","RSI","RDI","RBP",
-      "R8","R9","R10","R11","R12","R13","R14","R15",
-      "RSP","RIP","CS","RFLAGS","URSP","USS"
+      "RAX   ","RBX   ","RCX   ","RDX   ","RSI   ","RDI   ","RBP   ",
+      "R8    ","R9    ","R10   ","R11   ","R12   ","R13   ","R14   ","R15   ",
+      "RSP   ","RIP   ","CS    ","RFLAGS","URSP  ","USS   "
     };
 
+    writeString("--- Register Dump ---\n", 22);
+    
+    // Imprimir en columnas de 2 para mejor legibilidad
     for (int i = 0; i < 21; i++) {
-        writeString(name[i], 3); writeString(": 0x", 4); print_hex64(snapshot[i]); writeString("\n", 1);
+        writeString(name[i], 6);
+        writeString(": 0x", 4);
+        print_hex64(snapshot[i]);
+        
+        if (i % 2 == 1) {
+            writeString("\n", 1);
+        } else {
+            writeString("    ", 4);
+        }
     }
-
+    
+    if (21 % 2 != 0) writeString("\n", 1);
+    
+    writeString("\n========================================\n", 42);
 	_sti();
-	writeString("Press any key to continue...\n", 29);
+	writeString("Press any key to return to shell...\n", 36);
 	
-        while (keyboard_getchar() == 0); // Espera a que el usuario presione una tecla
-        clearScreen();
+    while (keyboard_getchar() == 0); // Espera a que el usuario presione una tecla
+    clearScreen();
 }

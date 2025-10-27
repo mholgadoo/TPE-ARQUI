@@ -24,4 +24,12 @@ void _sys_get_time(uint64_t syscall_number,rtc_time_t *time);
 void _sys_playBeep(uint64_t syscall_number, uint32_t frequency, uint32_t duration_ms);
 void _sys_changeFontSize(uint64_t syscall_number, int new_size);
 
+// Benchmarking syscalls
+uint64_t _sys_rdtsc(uint64_t syscall_number);
+uint64_t _sys_get_tsc_freq(uint64_t syscall_number);
+uint64_t _sys_cycles_to_ms(uint64_t syscall_number, uint64_t cycles);
+uint64_t _sys_cycles_to_us(uint64_t syscall_number, uint64_t cycles);
+int _sys_has_tsc(uint64_t syscall_number);
+int _sys_has_invariant_tsc(uint64_t syscall_number);
+
 #endif

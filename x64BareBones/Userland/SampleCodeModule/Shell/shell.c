@@ -4,25 +4,36 @@
 #include <stddef.h>
 #include "../syscalls.h"
 #include "../lib.h"
+#include "../bench/bench.h"
 
 #define REG_COUNT 21
 
 static char *username;
-static int fontScale = 1;
 
 
 void shell_print_help() {
-    print("Available commands:\n");
-    print("help       - show this help\n");
-    print("divzero    - trigger division by zero\n");
-    print("invopcode  - trigger invalid opcode\n");
-    print("time       - display system time\n");
-    print("regs       - display CPU registers\n");
-    print("clear      - clear screen\n");
-    print("fontscale 1      - lowest font size\n");
-    print("fontscale 2      - middle font size\n");
-    print("fontscale 3      - bigger font size\n");
-    print("pongis     - play pongis game\n");
+    print("=== M&M Shell - Available Commands ===\n\n");
+    
+    print("System Commands:\n");
+    print("  help           - show this help\n");
+    print("  clear          - clear screen\n");
+    print("  time           - display system time\n");
+    print("  regs           - display CPU registers\n");
+    print("  fontscale 1-3  - change font size\n\n");
+    
+    print("Exception Tests (dump registers + return to shell):\n");
+    print("  divzero        - trigger division by zero exception\n");
+    print("  invopcode      - trigger invalid opcode exception\n\n");
+    
+    print("Games:\n");
+    print("  pongis         - play pongis (shows FPS!)\n\n");
+    
+    print("Benchmarks:\n");
+    print("  benchtest      - test benchmark timer\n");
+    print("  bench fps [s]  - FPS benchmark (default: 5 sec)\n");
+    print("  bench fpu [n]  - FPU benchmark Mandelbrot (default: 256)\n");
+    print("  bench io [m]   - I/O benchmark (kbd/fb/all)\n");
+    print("  bench env      - show environment info\n");
 }
 
 static int read_line(char *buf, int max) {
@@ -52,7 +63,16 @@ static int read_line(char *buf, int max) {
 }
 
 static void trigger_divzero() {
-    int x = 1 / 0;
+    // Usar assembly directo para garantizar división por cero
+    __asm__ __volatile__(
+        "mov $1, %%eax\n"      // eax = 1
+        "xor %%edx, %%edx\n"   // edx = 0 (parte alta)
+        "xor %%ebx, %%ebx\n"   // ebx = 0 (divisor)
+        "div %%ebx\n"          // 1 / 0 → excepción #DE
+        :
+        :
+        : "%eax", "%edx", "%ebx"
+    );
 }
 
 static void trigger_invopcode() {
@@ -93,13 +113,102 @@ static void print_hex64(uint64_t v) {
 static void print_regs(void)
 {
     uint64_t regs[REG_COUNT];
-    getRegisters(&regs);
+    getRegisters(regs);  // Pasar el puntero directo, no &regs
     for (int i = 0; i < REG_COUNT; i++) {
         print(regName[i]);
         print(": 0x");
         print_hex64(regs[i]);
         print("\n");
     }
+}
+
+static void test_benchmark(void) {
+    print("=== Benchmark Timer Test ===\n");
+    
+    // Verificar soporte de TSC
+    print("TSC Support: ");
+    print(has_tsc() ? "YES\n" : "NO\n");
+    
+    print("Invariant TSC: ");
+    print(has_invariant_tsc() ? "YES\n" : "NO\n");
+    
+    // Mostrar frecuencia TSC
+    uint64_t freq = get_tsc_freq();
+    print("TSC Frequency: ");
+    print_hex64(freq);
+    print(" Hz\n\n");
+    
+    // Test simple: medir el tiempo de algunas operaciones
+    print("Testing benchmark functions...\n");
+    
+    #define NUM_SAMPLES 10
+    uint64_t samples[NUM_SAMPLES];
+    
+    // Test 1: Medir tiempo de llamar a bench_start/stop
+    print("Test 1: Overhead de bench_start/bench_stop\n");
+    for (int i = 0; i < NUM_SAMPLES; i++) {
+        uint64_t start = bench_start();
+        samples[i] = bench_stop(start);
+    }
+    print_stats("Overhead", samples, NUM_SAMPLES);
+    
+    // Test 2: Medir un loop simple
+    print("Test 2: Loop de 1000 iteraciones\n");
+    for (int i = 0; i < NUM_SAMPLES; i++) {
+        uint64_t start = bench_start();
+        volatile int x = 0;
+        for (int j = 0; j < 1000; j++) {
+            x++;
+        }
+        samples[i] = bench_stop(start);
+    }
+    print_stats("Loop 1000", samples, NUM_SAMPLES);
+    
+    // Test 3: Medir tiempo de una syscall
+    print("Test 3: Syscall get_tsc_freq()\n");
+    for (int i = 0; i < NUM_SAMPLES; i++) {
+        uint64_t start = bench_start();
+        get_tsc_freq();
+        samples[i] = bench_stop(start);
+    }
+    print_stats("Syscall", samples, NUM_SAMPLES);
+    
+    print("=== Test Complete ===\n");
+}
+
+// Helper para parsear un número de un string
+static int parse_int(const char *str) {
+    int result = 0;
+    int i = 0;
+    while (str[i] >= '0' && str[i] <= '9') {
+        result = result * 10 + (str[i] - '0');
+        i++;
+    }
+    return result;
+}
+
+// Helper para verificar si un string comienza con un prefijo
+static int starts_with(const char *str, const char *prefix) {
+    int i = 0;
+    while (prefix[i] != '\0') {
+        if (str[i] != prefix[i]) return 0;
+        i++;
+    }
+    return 1;
+}
+
+// Helper para extraer el argumento después de un espacio
+static const char* get_arg(const char *line, const char *cmd) {
+    int cmd_len = 0;
+    while (cmd[cmd_len]) cmd_len++;
+    
+    // Saltar el comando
+    const char *p = line + cmd_len;
+    
+    // Saltar espacios
+    while (*p == ' ') p++;
+    
+    return p;
 }
 
 static void setUsername(const char *name) {
@@ -140,7 +249,39 @@ static void commandProc(const char *line) {
         playBeep(8, 392, 200);      //G
     } else if (str_eq(line, "pongis"))
         pongis_game();
-    else
+    else if (str_eq(line, "benchtest"))
+        test_benchmark();
+    // Comandos bench
+    else if (starts_with(line, "bench fps")) {
+        const char *arg = get_arg(line, "bench fps");
+        int seconds = 5;
+        if (arg[0] >= '0' && arg[0] <= '9') {
+            seconds = parse_int(arg);
+        }
+        bench_fps(seconds);
+    } else if (starts_with(line, "bench fpu")) {
+        const char *arg = get_arg(line, "bench fpu");
+        int size = 256;
+        if (arg[0] >= '0' && arg[0] <= '9') {
+            size = parse_int(arg);
+        }
+        bench_fpu(size);
+    } else if (starts_with(line, "bench io")) {
+        const char *arg = get_arg(line, "bench io");
+        if (arg[0] == '\0') {
+            bench_io("all");
+        } else {
+            bench_io(arg);
+        }
+    } else if (str_eq(line, "bench env")) {
+        bench_env();
+    } else if (str_eq(line, "bench")) {
+        print("Benchmark commands:\n");
+        print("  bench fps [seconds]  - FPS benchmark\n");
+        print("  bench fpu [size]     - FPU benchmark (Mandelbrot)\n");
+        print("  bench io [mode]      - I/O benchmark (kbd/fb/all)\n");
+        print("  bench env            - Environment info\n");
+    } else
         print("Unknown command\n");
 }
 

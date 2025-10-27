@@ -1,7 +1,7 @@
 include ../Makefile.inc
 
 MODULE=0000-sampleCodeModule.bin
-SOURCES=$(wildcard [^_]*.c) Shell/shell.c
+SOURCES=$(wildcard [^_]*.c) Shell/shell.c bench/bench_fps.c bench/bench_fpu.c bench/bench_io.c bench/bench_env.c
 ASM_SRCS=$(wildcard *.asm)
 ASM_OBJS=$(ASM_SRCS:.asm=.o)
 

@@ -8,6 +8,12 @@ global _sys_get_registers
 global _sys_get_time
 global _sys_playBeep
 global _sys_changeFontSize
+global _sys_rdtsc
+global _sys_get_tsc_freq
+global _sys_cycles_to_ms
+global _sys_cycles_to_us
+global _sys_has_tsc
+global _sys_has_invariant_tsc
 
 section .text
 
@@ -57,5 +63,41 @@ _sys_playBeep:
 
 _sys_changeFontSize:
     mov rax, 9
+    int 0x80
+    ret
+
+; uint64_t _sys_rdtsc()
+_sys_rdtsc:
+    mov rax, 10
+    int 0x80
+    ret
+
+; uint64_t _sys_get_tsc_freq()
+_sys_get_tsc_freq:
+    mov rax, 11
+    int 0x80
+    ret
+
+; uint64_t _sys_cycles_to_ms(uint64_t cycles)
+_sys_cycles_to_ms:
+    mov rax, 12
+    int 0x80
+    ret
+
+; uint64_t _sys_cycles_to_us(uint64_t cycles)
+_sys_cycles_to_us:
+    mov rax, 13
+    int 0x80
+    ret
+
+; int _sys_has_tsc()
+_sys_has_tsc:
+    mov rax, 14
+    int 0x80
+    ret
+
+; int _sys_has_invariant_tsc()
+_sys_has_invariant_tsc:
+    mov rax, 15
     int 0x80
     ret

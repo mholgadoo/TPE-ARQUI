@@ -56,8 +56,8 @@ static coords level2_obstacles[L2_OBS] = {
     {SCREEN_WIDTH/2 - L2_OB_W/2, SCREEN_HEIGHT/2 + 80}
 };
 
-//implementamos el score
-static void draw_score(int p1, int p2) {
+//implementamos el score y FPS
+static void draw_score(int p1, int p2, int fps) {
     char buf[32];
     print("P1: ");
     int len = int_to_str(p1, buf);
@@ -65,6 +65,10 @@ static void draw_score(int p1, int p2) {
     print(buf);
     print("    P2: ");
     len = int_to_str(p2, buf);
+    buf[len] = '\0';
+    print(buf);
+    print("    FPS: ");
+    len = int_to_str(fps, buf);
     buf[len] = '\0';
     print(buf);
     print("\n");
@@ -134,6 +138,13 @@ void pongis_game() {
     int last = 0;
     char running = 1;
 
+    // FPS counter - ventana deslizante de 60 frames
+    #define FPS_WINDOW 60
+    uint64_t frame_times[FPS_WINDOW];
+    int frame_index = 0;
+    int frame_count = 0;
+    int current_fps = 0;
+
     for (int level = 1; level <= 2 && running; level++) {
         if (level == 1) {
             obstacles     = level1_obstacles;
@@ -153,6 +164,8 @@ void pongis_game() {
         char levelWon = 0;
 
         while (running && !levelWon) {
+            // Iniciar medición del frame
+            uint64_t frame_start = bench_start();
             coords pos1 = p1, pos2 = p2; //para que podamos volver atras si se chocan con obstaculos
             char c = 0;
             while (read(&c, 1) > 0) {
@@ -241,7 +254,7 @@ void pongis_game() {
             }
 
             clearScreen();
-            draw_score(score1, score2);
+            draw_score(score1, score2, current_fps);
 
             _sys_drawRect(SYS_DRAW_RECT, 0x00FF00, p1.x, p1.y, PLAYERS_SIZE, PLAYERS_SIZE);
             _sys_drawRect(SYS_DRAW_RECT, 0xFF0000, p2.x, p2.y, PLAYERS_SIZE, PLAYERS_SIZE);
@@ -256,6 +269,27 @@ void pongis_game() {
             }
 
             _sys_sleep(SYS_SLEEP, 2);
+            
+            // Calcular FPS
+            uint64_t frame_cycles = bench_stop(frame_start);
+            frame_times[frame_index] = frame_cycles;
+            frame_index = (frame_index + 1) % FPS_WINDOW;
+            if (frame_count < FPS_WINDOW) frame_count++;
+            
+            // Calcular FPS promedio cada 10 frames
+            if (frame_count >= 10 && frame_index % 10 == 0) {
+                uint64_t total_cycles = 0;
+                for (int i = 0; i < frame_count; i++) {
+                    total_cycles += frame_times[i];
+                }
+                uint64_t avg_cycles = total_cycles / frame_count;
+                uint64_t avg_ms = cycles_to_ms(avg_cycles);
+                if (avg_ms > 0) {
+                    current_fps = 1000 / avg_ms;
+                } else {
+                    current_fps = 9999; // Muy rápido
+                }
+            }
         }
         if (!running) break;
     }

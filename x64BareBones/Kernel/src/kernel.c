@@ -3,6 +3,7 @@
 #include <lib.h>
 #include <moduleLoader.h>
 #include <naiveConsole.h>
+#include <bench_timer.h>
 #include "interrupts.h"
 #include "videoDriver.h"
 
@@ -85,7 +86,18 @@ void * initializeKernelBinary()
 
 int main() {
     load_idt();
-    _sti();                                  
+    _sti();
+
+	// Calibrar TSC para mediciones de benchmark
+	ncPrint("[Calibrating TSC...]");
+	ncNewline();
+	calibrate_tsc();
+	ncPrint("  TSC Frequency: ");
+	ncPrintHex(get_tsc_frequency());
+	ncPrint(" Hz");
+	ncNewline();
+	ncPrint("[TSC Ready]");
+	ncNewline();
 
 	/*
 	char c;
