@@ -32,4 +32,7 @@ uint64_t _sys_cycles_to_us(uint64_t syscall_number, uint64_t cycles);
 int _sys_has_tsc(uint64_t syscall_number);
 int _sys_has_invariant_tsc(uint64_t syscall_number);
 
+// Video syscalls
+void _sys_putChar(uint64_t syscall_number, char c, uint32_t x, uint32_t y, uint32_t color);
+
 #endif

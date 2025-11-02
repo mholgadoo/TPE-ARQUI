@@ -14,6 +14,7 @@ global _sys_cycles_to_ms
 global _sys_cycles_to_us
 global _sys_has_tsc
 global _sys_has_invariant_tsc
+global _sys_putChar
 
 section .text
 
@@ -99,5 +100,11 @@ _sys_has_tsc:
 ; int _sys_has_invariant_tsc()
 _sys_has_invariant_tsc:
     mov rax, 15
+    int 0x80
+    ret
+
+; void _sys_putChar(char c, uint32_t x, uint32_t y, uint32_t color)
+_sys_putChar:
+    mov rax, 16
     int 0x80
     ret

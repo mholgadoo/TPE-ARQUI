@@ -19,6 +19,7 @@
 #define SYS_CYCLES_TO_US      13
 #define SYS_HAS_TSC           14
 #define SYS_HAS_INVARIANT_TSC 15
+#define SYS_PUT_CHAR          16
 
 int str_len(const char *s);
 int str_eq(const char *a, const char *b);

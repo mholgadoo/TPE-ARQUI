@@ -54,6 +54,10 @@ uint64_t syscallDispatcher(uint64_t syscall_number, uint64_t arg1, uint64_t arg2
         case 15:
             // Verificar si tiene TSC invariante
             return has_invariant_tsc();
+        case 16:
+            // putChar - dibujar un carácter en posición específica
+            putChar((char)arg1, (uint32_t)arg2, (uint32_t)arg3, (uint32_t)arg4);
+            return 0;
         default:
             return -1;
     }

@@ -5,6 +5,7 @@
 #include "../syscalls.h"
 #include "../lib.h"
 #include "../bench/bench.h"
+#include "../tron.h"
 
 #define REG_COUNT 21
 
@@ -26,7 +27,9 @@ void shell_print_help() {
     print("  invopcode      - trigger invalid opcode exception\n\n");
     
     print("Games:\n");
-    print("  pongis         - play pongis (shows FPS!)\n\n");
+    print("  pongis         - play pongis (shows FPS!)\n");
+    print("  tron [flags]   - play TRON light cycles (asks # of players)\n");
+    print("                   optional flags: -speed N -cell N -max_score N\n\n");
     
     print("Benchmarks:\n");
     print("  benchtest      - test benchmark timer\n");
@@ -249,6 +252,10 @@ static void commandProc(const char *line) {
         playBeep(8, 392, 200);      //G
     } else if (str_eq(line, "pongis"))
         pongis_game();
+    else if (starts_with(line, "tron")) {
+        const char *arg = get_arg(line, "tron");
+        tron_game(arg);
+    }
     else if (str_eq(line, "benchtest"))
         test_benchmark();
     // Comandos bench
