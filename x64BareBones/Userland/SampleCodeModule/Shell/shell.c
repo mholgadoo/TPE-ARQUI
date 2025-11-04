@@ -19,7 +19,7 @@ void shell_print_help() {
     print("  help           - show this help\n");
     print("  clear          - clear screen\n");
     print("  time           - display system time\n");
-    print("  regs           - display CPU registers\n");
+    print("  'ctrl + r'     - display CPU registers\n");
     print("  fontscale 1-3  - change font size\n\n");
     
     print("Exception Tests (dump registers + return to shell):\n");
@@ -27,9 +27,8 @@ void shell_print_help() {
     print("  invopcode      - trigger invalid opcode exception\n\n");
     
     print("Games:\n");
-    print("  pongis         - play pongis (shows FPS!)\n");
     print("  tron [flags]   - play TRON light cycles (asks # of players)\n");
-    print("                   optional flags: -speed N -cell N -max_score N\n\n");
+    print("                   optional flags: -speed N -cell N \n\n");
     
     print("Benchmarks:\n");
     print("  benchtest      - test benchmark timer\n");

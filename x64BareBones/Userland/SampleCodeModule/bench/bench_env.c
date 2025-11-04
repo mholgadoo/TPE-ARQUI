@@ -100,9 +100,6 @@ void bench_env(void) {
     print(inv_tsc ? "YES" : "NO");
     print("\n");
     
-    print("\nNota: Use estos datos para crear la tabla\n");
-    print("comparativa en el informe.\n");
-    
     print("\n=== Fin Detection ===\n\n");
 }
 

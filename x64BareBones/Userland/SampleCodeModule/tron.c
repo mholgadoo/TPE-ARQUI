@@ -138,6 +138,27 @@ static void init_grid() {
         }
     }
     
+    // Add border walls for both modes (visible boundaries)
+    // Top border
+    for (int x = 0; x < game.grid_width; x++) {
+        game.grid[0][x] = WALL;
+    }
+    
+    // Bottom border
+    for (int x = 0; x < game.grid_width; x++) {
+        game.grid[game.grid_height - 1][x] = WALL;
+    }
+    
+    // Left border
+    for (int y = 0; y < game.grid_height; y++) {
+        game.grid[y][0] = WALL;
+    }
+    
+    // Right border
+    for (int y = 0; y < game.grid_height; y++) {
+        game.grid[y][game.grid_width - 1] = WALL;
+    }
+    
     // Add static obstacles to the map ONLY in solo mode
     if (game.mode == MODE_SOLO) {
         // Create several rectangular obstacles distributed across the map
@@ -182,39 +203,6 @@ static void init_grid() {
         int obs4_h = game.grid_height / 8;
         for (int y = obs4_y; y < obs4_y + obs4_h && y < game.grid_height; y++) {
             for (int x = obs4_x; x < obs4_x + obs4_w && x < game.grid_width; x++) {
-                game.grid[y][x] = WALL;
-            }
-        }
-        
-        // Obstacle 5: Center-left vertical bar
-        int obs5_x = game.grid_width / 3;
-        int obs5_y = game.grid_height / 3;
-        int obs5_w = game.grid_width / 20;
-        int obs5_h = game.grid_height / 3;
-        for (int y = obs5_y; y < obs5_y + obs5_h && y < game.grid_height; y++) {
-            for (int x = obs5_x; x < obs5_x + obs5_w && x < game.grid_width; x++) {
-                game.grid[y][x] = WALL;
-            }
-        }
-        
-        // Obstacle 6: Center-right vertical bar
-        int obs6_x = 2 * game.grid_width / 3;
-        int obs6_y = game.grid_height / 3;
-        int obs6_w = game.grid_width / 20;
-        int obs6_h = game.grid_height / 3;
-        for (int y = obs6_y; y < obs6_y + obs6_h && y < game.grid_height; y++) {
-            for (int x = obs6_x; x < obs6_x + obs6_w && x < game.grid_width; x++) {
-                game.grid[y][x] = WALL;
-            }
-        }
-        
-        // Obstacle 7: Center horizontal bar
-        int obs7_x = game.grid_width / 3;
-        int obs7_y = game.grid_height / 2;
-        int obs7_w = game.grid_width / 3;
-        int obs7_h = game.grid_height / 20;
-        for (int y = obs7_y; y < obs7_y + obs7_h && y < game.grid_height; y++) {
-            for (int x = obs7_x; x < obs7_x + obs7_w && x < game.grid_width; x++) {
                 game.grid[y][x] = WALL;
             }
         }
