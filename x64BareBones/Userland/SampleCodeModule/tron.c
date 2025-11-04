@@ -77,10 +77,12 @@ typedef struct {
     int grid_width;        // arena width in cells
     int grid_height;       // arena height in cells
     int max_score;         // points to win
+    int survival_seconds;  // seconds to survive in solo mode
     int score1;
     int score2;
     int state;
     int fps;               // current FPS
+    uint64_t survival_start;  // Start time for survival timer (in cycles)
     Player p1;
     Player p2;
     uint8_t grid[MAX_GRID_HEIGHT][MAX_GRID_WIDTH];
@@ -129,9 +131,92 @@ static void skip_spaces(const char **str) {
 // ============================================================================
 
 static void init_grid() {
+    // Clear grid
     for (int y = 0; y < game.grid_height; y++) {
         for (int x = 0; x < game.grid_width; x++) {
             game.grid[y][x] = EMPTY;
+        }
+    }
+    
+    // Add static obstacles to the map ONLY in solo mode
+    if (game.mode == MODE_SOLO) {
+        // Create several rectangular obstacles distributed across the map
+        
+        // Obstacle 1: Top-left area
+        int obs1_x = game.grid_width / 6;
+        int obs1_y = game.grid_height / 6;
+        int obs1_w = game.grid_width / 8;
+        int obs1_h = game.grid_height / 8;
+        for (int y = obs1_y; y < obs1_y + obs1_h && y < game.grid_height; y++) {
+            for (int x = obs1_x; x < obs1_x + obs1_w && x < game.grid_width; x++) {
+                game.grid[y][x] = WALL;
+            }
+        }
+        
+        // Obstacle 2: Top-right area
+        int obs2_x = 5 * game.grid_width / 6;
+        int obs2_y = game.grid_height / 6;
+        int obs2_w = game.grid_width / 8;
+        int obs2_h = game.grid_height / 8;
+        for (int y = obs2_y; y < obs2_y + obs2_h && y < game.grid_height; y++) {
+            for (int x = obs2_x; x < obs2_x + obs2_w && x < game.grid_width; x++) {
+                game.grid[y][x] = WALL;
+            }
+        }
+        
+        // Obstacle 3: Bottom-left area
+        int obs3_x = game.grid_width / 6;
+        int obs3_y = 5 * game.grid_height / 6;
+        int obs3_w = game.grid_width / 8;
+        int obs3_h = game.grid_height / 8;
+        for (int y = obs3_y; y < obs3_y + obs3_h && y < game.grid_height; y++) {
+            for (int x = obs3_x; x < obs3_x + obs3_w && x < game.grid_width; x++) {
+                game.grid[y][x] = WALL;
+            }
+        }
+        
+        // Obstacle 4: Bottom-right area
+        int obs4_x = 5 * game.grid_width / 6;
+        int obs4_y = 5 * game.grid_height / 6;
+        int obs4_w = game.grid_width / 8;
+        int obs4_h = game.grid_height / 8;
+        for (int y = obs4_y; y < obs4_y + obs4_h && y < game.grid_height; y++) {
+            for (int x = obs4_x; x < obs4_x + obs4_w && x < game.grid_width; x++) {
+                game.grid[y][x] = WALL;
+            }
+        }
+        
+        // Obstacle 5: Center-left vertical bar
+        int obs5_x = game.grid_width / 3;
+        int obs5_y = game.grid_height / 3;
+        int obs5_w = game.grid_width / 20;
+        int obs5_h = game.grid_height / 3;
+        for (int y = obs5_y; y < obs5_y + obs5_h && y < game.grid_height; y++) {
+            for (int x = obs5_x; x < obs5_x + obs5_w && x < game.grid_width; x++) {
+                game.grid[y][x] = WALL;
+            }
+        }
+        
+        // Obstacle 6: Center-right vertical bar
+        int obs6_x = 2 * game.grid_width / 3;
+        int obs6_y = game.grid_height / 3;
+        int obs6_w = game.grid_width / 20;
+        int obs6_h = game.grid_height / 3;
+        for (int y = obs6_y; y < obs6_y + obs6_h && y < game.grid_height; y++) {
+            for (int x = obs6_x; x < obs6_x + obs6_w && x < game.grid_width; x++) {
+                game.grid[y][x] = WALL;
+            }
+        }
+        
+        // Obstacle 7: Center horizontal bar
+        int obs7_x = game.grid_width / 3;
+        int obs7_y = game.grid_height / 2;
+        int obs7_w = game.grid_width / 3;
+        int obs7_h = game.grid_height / 20;
+        for (int y = obs7_y; y < obs7_y + obs7_h && y < game.grid_height; y++) {
+            for (int x = obs7_x; x < obs7_x + obs7_w && x < game.grid_width; x++) {
+                game.grid[y][x] = WALL;
+            }
         }
     }
 }
@@ -178,21 +263,45 @@ static void draw_hud() {
     // Build text strings
     char buf[100];
     
-    // P1 score
-    buf[0] = 'P'; buf[1] = '1'; buf[2] = ':'; buf[3] = ' ';
-    int len = int_to_str(game.score1, buf + 4);
-    buf[4 + len] = '\0';
-    draw_text(buf, 10, 5, COLOR_PLAYER1);
-    
-    // P2 score
-    buf[0] = 'P'; buf[1] = '2'; buf[2] = ':'; buf[3] = ' ';
-    len = int_to_str(game.score2, buf + 4);
-    buf[4 + len] = '\0';
-    draw_text(buf, 120, 5, COLOR_PLAYER2);
+    if (game.mode == MODE_SOLO) {
+        // Solo mode: Show survival timer
+        uint64_t elapsed = bench_stop(game.survival_start);
+        uint64_t elapsed_ms = cycles_to_ms(elapsed);
+        int seconds = elapsed_ms / 1000;
+        int target_seconds = game.survival_seconds;
+        int remaining = target_seconds - seconds;
+        
+        if (remaining < 0) remaining = 0;
+        
+        buf[0] = 'T'; buf[1] = 'i'; buf[2] = 'm'; buf[3] = 'e'; buf[4] = ':'; buf[5] = ' ';
+        int len = int_to_str(remaining, buf + 6);
+        buf[6 + len] = '\0';
+        draw_text(buf, 10, 5, (remaining > 5) ? 0x00FF00 : 0xFF0000);  // Green if >5s, red if <=5s
+        
+        // Show goal
+        buf[0] = 'G'; buf[1] = 'o'; buf[2] = 'a'; buf[3] = 'l'; buf[4] = ':'; buf[5] = ' ';
+        len = int_to_str(game.survival_seconds, buf + 6);
+        buf[6 + len] = 's';
+        buf[6 + len + 1] = '\0';
+        draw_text(buf, 120, 5, COLOR_TEXT);
+    } else {
+        // Versus mode: Show scores
+        // P1 score
+        buf[0] = 'P'; buf[1] = '1'; buf[2] = ':'; buf[3] = ' ';
+        int len = int_to_str(game.score1, buf + 4);
+        buf[4 + len] = '\0';
+        draw_text(buf, 10, 5, COLOR_PLAYER1);
+        
+        // P2 score
+        buf[0] = 'P'; buf[1] = '2'; buf[2] = ':'; buf[3] = ' ';
+        len = int_to_str(game.score2, buf + 4);
+        buf[4 + len] = '\0';
+        draw_text(buf, 120, 5, COLOR_PLAYER2);
+    }
     
     // Speed
     buf[0] = 'S'; buf[1] = 'p'; buf[2] = 'd'; buf[3] = ':'; buf[4] = ' ';
-    len = int_to_str(game.speed, buf + 5);
+    int len = int_to_str(game.speed, buf + 5);
     buf[5 + len] = '\0';
     draw_text(buf, 240, 5, 0xFFFF00);
     
@@ -256,6 +365,9 @@ static void draw_game() {
                 case P2_TRAIL:
                     color = COLOR_PLAYER2;
                     break;
+                case WALL:
+                    color = COLOR_WALL;
+                    break;
             }
             if (color != COLOR_BLACK) {
                 draw_cell(x, y, color);
@@ -318,6 +430,10 @@ static void reset_round() {
     init_grid();
     init_players();
     game.state = STATE_PLAYING;
+    // Reset survival timer in solo mode
+    if (game.mode == MODE_SOLO) {
+        game.survival_start = bench_start();
+    }
 }
 
 static int is_opposite_dir(int dir1, int dir2) {
@@ -394,22 +510,41 @@ static void update_players() {
         place_trail(game.p2.x, game.p2.y, 2);
     }
     
-    // Handle scoring
+    // Handle scoring and survival mode
     if (p1_collision || p2_collision) {
-        if (p1_collision && p2_collision) {
-            // Both crashed - no points
+        if (game.mode == MODE_SOLO) {
+            // Solo mode: Player died, reset timer
+            game.survival_start = bench_start();
             _sys_playBeep(SYS_PLAY_BEEP, 200, 100);
-        } else if (p1_collision) {
-            // P1 crashed, P2 wins
-            game.score2++;
-            _sys_playBeep(SYS_PLAY_BEEP, 880, 150);
+            game.state = STATE_ROUND_END;
         } else {
-            // P2 crashed, P1 wins
-            game.score1++;
-            _sys_playBeep(SYS_PLAY_BEEP, 440, 150);
+            // Versus mode: Normal scoring
+            if (p1_collision && p2_collision) {
+                // Both crashed - no points
+                _sys_playBeep(SYS_PLAY_BEEP, 200, 100);
+            } else if (p1_collision) {
+                // P1 crashed, P2 wins
+                game.score2++;
+                _sys_playBeep(SYS_PLAY_BEEP, 880, 150);
+            } else {
+                // P2 crashed, P1 wins
+                game.score1++;
+                _sys_playBeep(SYS_PLAY_BEEP, 440, 150);
+            }
+            
+            game.state = STATE_ROUND_END;
         }
+    } else if (game.mode == MODE_SOLO && game.p1.alive) {
+        // Check if player survived the required time in solo mode
+        uint64_t elapsed = bench_stop(game.survival_start);
+        uint64_t elapsed_ms = cycles_to_ms(elapsed);
+        uint64_t target_ms = game.survival_seconds * 1000;
         
-        game.state = STATE_ROUND_END;
+        if (elapsed_ms >= target_ms) {
+            // Player won! (sound will play in show_winner)
+            game.score1++;
+            game.state = STATE_ROUND_END;
+        }
     }
 }
 
@@ -461,10 +596,20 @@ static void show_winner() {
     clearScreen();
     changeFontSize(3);
     
-    if (game.score1 >= game.max_score) {
-        print("PLAYER 1 WINS!\n");
+    if (game.mode == MODE_SOLO) {
+        print("YOU SURVIVED ");
+        char buf[20];
+        int len = int_to_str(game.survival_seconds, buf);
+        buf[len] = '\0';
+        print(buf);
+        print(" SECONDS!\n");
+        print("VICTORY!\n");
     } else {
-        print("PLAYER 2 WINS!\n");
+        if (game.score1 >= game.max_score) {
+            print("PLAYER 1 WINS!\n");
+        } else {
+            print("PLAYER 2 WINS!\n");
+        }
     }
     
     // Victory sound
@@ -499,6 +644,61 @@ static int ask_players() {
     }
 }
 
+static int ask_number(const char *prompt, int default_value) {
+    char buffer[20];
+    int pos = 0;
+    int value = 0;
+    
+    print(prompt);
+    char buf[50];
+    buf[0] = ' '; buf[1] = '('; buf[2] = 'd'; buf[3] = 'e'; buf[4] = 'f';
+    buf[5] = 'a'; buf[6] = 'u'; buf[7] = 'l'; buf[8] = 't'; buf[9] = ':';
+    buf[10] = ' '; 
+    int len = int_to_str(default_value, buf + 11);
+    buf[11 + len] = ')'; buf[12 + len] = ':'; buf[13 + len] = ' '; buf[14 + len] = '\0';
+    print(buf);
+    
+    buffer[0] = '\0';
+    
+    while (1) {
+        char c = 0;
+        if (read(&c, 1) > 0) {
+            if (c == '\n' || c == '\r' || c == ' ') {
+                // Enter or Space to confirm
+                if (pos > 0) {
+                    // Parse the number
+                    buffer[pos] = '\0';
+                    value = str_to_int(buffer);
+                    if (value >= 1) {
+                        print("\n");
+                        return value;
+                    } else {
+                        print("\nValor invalido (debe ser >= 1). Intenta de nuevo: ");
+                        pos = 0;
+                        buffer[0] = '\0';
+                    }
+                } else {
+                    // Empty input, use default
+                    print("\n");
+                    return default_value;
+                }
+            } else if (c >= '0' && c <= '9' && pos < 19) {
+                buffer[pos++] = c;
+                printChar(c);
+            } else if (c == 8 || c == 127 || c == '\b') {  // Backspace
+                if (pos > 0) {
+                    pos--;
+                    buffer[pos] = '\0';
+                    // Print backspace, space, and backspace again to visually erase
+                    printChar('\b');
+                    printChar(' ');
+                    printChar('\b');
+                }
+            }
+        }
+    }
+}
+
 // ============================================================================
 // Main Game Loop
 // ============================================================================
@@ -528,9 +728,19 @@ static void game_loop() {
         
         if (game.state == STATE_ROUND_END) {
             // Check for game end
-            if (game.score1 >= game.max_score || game.score2 >= game.max_score) {
-                show_winner();
-                break;
+            if (game.mode == MODE_SOLO) {
+                // In solo mode, show victory message and restart
+                if (game.score1 > 0) {
+                    show_winner();
+                    // Reset score and continue
+                    game.score1 = 0;
+                }
+            } else {
+                // Versus mode: check max score
+                if (game.score1 >= game.max_score || game.score2 >= game.max_score) {
+                    show_winner();
+                    break;
+                }
             }
             
             // Wait and reset
@@ -589,6 +799,7 @@ static void parse_args(const char *args) {
     game.speed = DEFAULT_SPEED;
     game.cell_size = DEFAULT_CELL_SIZE;
     game.max_score = DEFAULT_MAX_SCORE;
+    int max_score_specified = 0;
     
     // Parse arguments
     while (*args) {
@@ -627,12 +838,18 @@ static void parse_args(const char *args) {
             skip_spaces(&args);
             game.max_score = str_to_int(args);
             if (game.max_score < 1) game.max_score = 1;
+            max_score_specified = 1;
             while (*args >= '0' && *args <= '9') args++;
         }
         else {
             // Skip unknown argument
             while (*args && *args != ' ' && *args != '-') args++;
         }
+    }
+    
+    // Set default max_score for versus mode (3 victories) if not specified
+    if (!max_score_specified && game.mode == MODE_VERSUS) {
+        game.max_score = 3;
     }
     
     // Calculate grid dimensions
@@ -661,6 +878,17 @@ void tron_game(const char *args) {
         p++;
     }
     
+    // Check if max_score was specified in args
+    int max_score_specified = 0;
+    const char *p_check = args;
+    while (*p_check) {
+        if (str_starts_with(p_check, "-max_score")) {
+            max_score_specified = 1;
+            break;
+        }
+        p_check++;
+    }
+    
     if (!has_mode_flag) {
         print("=== TRON LIGHT CYCLES ===\n\n");
         int players = ask_players();
@@ -668,10 +896,25 @@ void tron_game(const char *args) {
         print("\n");
     }
     
+    // Initialize survival_seconds (default: 15)
+    game.survival_seconds = 15;
+    
+    // Ask for configuration based on mode
+    if (game.mode == MODE_SOLO) {
+        // Ask for survival time in solo mode
+        game.survival_seconds = ask_number("Segundos a sobrevivir", 15);
+    } else {
+        // Ask for max_score in versus mode if not specified in args
+        if (!max_score_specified) {
+            game.max_score = ask_number("Rondas para ganar", 3);
+        }
+    }
+    
     // Initialize game state
     game.score1 = 0;
     game.score2 = 0;
     game.state = STATE_PLAYING;
+    game.survival_start = bench_start();
     
     // Show instructions
     print("=== INSTRUCCIONES ===\n");
@@ -679,7 +922,13 @@ void tron_game(const char *args) {
     if (game.mode == MODE_VERSUS) {
         print("Player 2: I/J/K/L | Turbo: O\n");
     } else {
-        print("Mode: SOLO (evita el obstaculo!)\n");
+        print("Mode: SOLO - Sobrevive ");
+        char buf[20];
+        int len = int_to_str(game.survival_seconds, buf);
+        buf[len] = '\0';
+        print(buf);
+        print(" segundos!\n");
+        print("Si mueres, el tiempo se resetea.\n");
     }
     print("P: Pause | R: Reset | Q: Quit\n");
     print("Turbo: 2x velocidad (recarga auto)\n\n");
