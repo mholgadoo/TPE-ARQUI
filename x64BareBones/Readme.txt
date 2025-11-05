@@ -22,7 +22,7 @@ From the x64BareBones project directory run:
 
 4- Run the kernel
 
-From the x64BareBones project directory run:
+From the x64BareBones project directory run: 
 
   user@linux:$ ./run.sh
 
